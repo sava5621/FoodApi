@@ -1,17 +1,38 @@
-var builder = WebApplication.CreateBuilder(args);
+using FoodApi.Controllers;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+using Pomelo.EntityFrameworkCore.MySql;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
-// Add services to the container.
+internal class Program
+{
 
-builder.Services.AddControllers();
+    private static void Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
 
-var app = builder.Build();
+        // Add services to the container.
+        var connectionString = "server=u1648633.plsk.regruhosting.ru;port=3306;user=u1648633_admin;password=Y79-VkR-iFi-RsX;database=u1648633_food_db;";
 
-// Configure the HTTP request pipeline.
+        builder.Services.AddDbContextPool<dbContext>(options => options
+            .UseMySql(
+                connectionString,
+                ServerVersion.AutoDetect(connectionString),
+                options => options.EnableRetryOnFailure()
+            )
+        );
+        builder.Services.AddControllers();
 
-app.UseHttpsRedirection();
+        var app = builder.Build();
 
-app.UseAuthorization();
+        // Configure the HTTP request pipeline. 
 
-app.MapControllers();
+        app.UseHttpsRedirection();
 
-app.Run();
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        app.Run();
+    }
+}
