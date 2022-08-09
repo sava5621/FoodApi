@@ -6,7 +6,7 @@ namespace FoodApi.Controllers
 {
     public class dbContext : Microsoft.EntityFrameworkCore.DbContext
     {
-        public DbSet<Booking_list> Booking_list { get; set; }
+        public DbSet<User_has_restoran> User_has_restoran { get; set; }
         public DbSet<Carousel_advertisement> Carousel_advertisement { get; set; }
         public DbSet<Carousel_offers> Carousel_offers { get; set; }
         public DbSet<Food> Food { get; set; }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FoodApi.Services;
+using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 namespace FoodApi.Controllers
 {
@@ -7,21 +8,21 @@ namespace FoodApi.Controllers
     public class ListDataController : ControllerBase
     {
         private readonly dbContext db;
-
+        private readonly string secret = "1234";
         public ListDataController(dbContext dbContext)
         {
             db = dbContext;
         }
         [HttpGet("carousel_off")]
-        public ContentResult GetCarouselOff()
+        public ActionResult GetCarouselOff()
         {
-            List<Food> result = new();
-            foreach (var i in db.Carousel_offers.ToList())
-            {
-                result.Add(db.Food.FirstOrDefault(x => x.id_food == i.Food_id_food));
-            }
-            return base.Content(JsonSerializer.Serialize(result),
-                                    "application/json; charset=utf-8");
+                List<Food> result = new();
+                foreach (var i in db.Carousel_offers.ToList())
+                {
+                    result.Add(db.Food.FirstOrDefault(x => x.id == i.Food_id));
+                }
+                return base.Content(JsonSerializer.Serialize(result),
+                                        "application/json; charset=utf-8");
         }
 
         [HttpGet("carousel_adv")]
@@ -30,31 +31,42 @@ namespace FoodApi.Controllers
             return base.Content(JsonSerializer.Serialize(db.Carousel_advertisement.ToList()),
                                      "application/json; charset=utf-8");
         }
-
-        [HttpGet("booking_list")]
-        public ContentResult GetBookingList(int id)
+        [HttpPost("User_has_restoran")]
+        public ActionResult GetBookingList([FromBody] Dictionary<string, string> arguments)
         {
-            FoodApi.Model.User user = db.User.FirstOrDefault(x => x.id == id.ToString());
-            if (user is not null)
+            if (TokenServices.ChecAccessToken(arguments, secret))
             {
-                List<Restoran> result = new();
-                foreach (Booking_list i in db.Booking_list.Where(x => x.User_id == id.ToString()).ToList())
+                FoodApi.Model.User user = db.User.FirstOrDefault(x => x.id.ToString() == arguments["Id"]);
+                if (user is not null)
                 {
-                    result.Add(db.Restoran.FirstOrDefault(x => x.id_restoran == i.Restoran_id_restoran));
+                    List<Restoran> result = new();
+
+                    foreach (User_has_restoran i in db.User_has_restoran.Where(x => x.User_id.ToString() == arguments["Id"]).ToList()) //база выебывается 
+                    {
+                        result.Add(db.Restoran.FirstOrDefault(x => x.id == i.Restoran_id));
+                    }
+                    return base.Content(JsonSerializer.Serialize(result),
+                                        "application/json; charset=utf-8");
                 }
-                return base.Content(JsonSerializer.Serialize(result),
-                                    "application/json; charset=utf-8");
+                return base.Content("404");
             }
-            return base.Content("404");
+            else
+            {
+                return BadRequest("ошибка авторизации");
+            }
         }
         [HttpGet("user")]
-        public ContentResult GetUser(int id)
+        public ActionResult GetUser([FromBody] Dictionary<string, string> arguments)
         {
-            var d = db.User.FirstOrDefault(x => x.id == id.ToString());
-            return base.Content(JsonSerializer.Serialize(db.User.FirstOrDefault(x => x.id == id.ToString())),
-           "application/json; charset=utf-8");
-        }
-        /* return base.Content(JsonSerializer.Serialize(_dbContext.carousel_advertisement.ToList()),
-           "application/json; charset=utf-8");*/
+            if (TokenServices.ChecAccessToken(arguments, secret))
+            {
+                return base.Content(JsonSerializer.Serialize(db.User.FirstOrDefault(x => x.id.ToString() == arguments["Id"])),
+               "application/json; charset=utf-8");
+            }
+            else
+            {
+                return BadRequest("ошибка авторизации");
+            }
+}
     }
 }
